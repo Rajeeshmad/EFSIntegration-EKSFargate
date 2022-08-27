@@ -1,0 +1,131 @@
+﻿---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ekstest
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: ekstest
+  name: deployment-ekstest
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ekstest
+  replicas: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ekstest
+    spec:
+      containers:
+      - image: 063755811837.dkr.ecr.us-east-1.amazonaws.com/efstest:latest
+        imagePullPolicy: Always
+        name: ekstest        
+        resources:
+            requests:
+                memory: "64Mi"
+                cpu: "250m"
+            limits:
+                memory: "128Mi"
+                cpu: "500m"
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        env:
+           - name: ASPNETCORE_URLS
+             value: http://+:80
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /app/accessfiles
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+         claimName: efs-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: ekstest
+  name: service-ekstest
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: ekstest
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: ekstest
+  name: ingress-ekstest
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: service-ekstest
+              port:
+                number: 80
+---
+
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: ekstest-pod-1
+#  namespace: ekstest
+#spec:
+#  containers:
+#    - image: 063755811837.dkr.ecr.us-east-1.amazonaws.com/efstest:latest
+#      imagePullPolicy: Always
+#      name: ekstest        
+#      resources:
+#         requests:
+#            memory: "64Mi"
+#            cpu: "250m"
+#         limits:
+#             memory: "128Mi"
+#             cpu: "500m"
+#      ports:
+#      - containerPort: 80
+#        protocol: TCP
+#      env:
+#        - name: ASPNETCORE_URLS
+#          value: http://+:80
+#      volumeMounts:
+#      - name: persistent-storage
+#        mountPath: /accessfiles
+#  volumes:
+#  - name: persistent-storage
+#    persistentVolumeClaim:
+#      claimName: efs-claim
+---
+#apiVersion: v1
+#kind: Pod
+#metadata:
+#  name: app1
+#  namespace: ekstest
+#spec:
+#  containers:
+#  - name: app1 
+#    image: busybox 
+#    command: ["/bin/sh"] 
+#    args: ["-c", "while true; do echo $(date -u) >> /data/out1.txt; sleep 5; done"]
+#    volumeMounts:
+#    - name: persistent-storage
+#      mountPath: /data
+#  volumes:
+#  - name: persistent-storage
+#    persistentVolumeClaim:
+#      claimName: efs-claim
