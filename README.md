@@ -74,3 +74,20 @@ Follow the below commands to setup both EFS and mounting to a cluster.
    # Add each Private subnet to the mount target
    aws efs create-mount-target --file-system-id $file_system_id --subnet-id subnet-1111111111111 --security-groups $security_group_id
    ```
+7) Attaching to the fargate
+   ```
+   # Use the StorageClass.yml file for creating PersistentVolume,PersistentVolume, StorageClass, update the volumeHandle: fs-021606e47f3d3f4b4 in PersistentVolume with
+   # newly created EFS filesystemid
+   # Confirm that a persistent volume was created with a status of Bound to a PersistentVolumeClaim
+   kubectl get pv
+   kubectl get pvc
+
+   ```
+8) Verify pods are running
+9) ```
+   # Verify whether uploaded documents are available in the following location. You can see all the documents uploaded in all the pods
+   # since all are sharing the same EFS
+   kubectl exec <PODNAME> -n ekstest -- ls /app/accessfile
+
+   ```
+
