@@ -87,7 +87,7 @@ Follow the below commands to setup both EFS and mounting to a cluster.
 9) ```
    # Verify whether uploaded documents are available in the following location. You can see all the documents uploaded in all the pods
    # since all are sharing the same EFS
-   kubectl exec <PODNAME> -n ekstest -- ls /app/accessfile
+   kubectl exec <PODNAME> -n ekstest -- ls /app/accessfiles
 
    ```
 
